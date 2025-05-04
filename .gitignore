@@ -134,3 +134,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# === VS Code & Cursor IDE ===
+.vscode/
+*.code-workspace
+
+# === JetBrains IDEs (IntelliJ IDEA, WebStorm, etc.) ===
+.idea/
+*.iml
+
+# === OS-specific (recommended for all repos) ===
+.DS_Store        # macOS
+Thumbs.db        # Windows

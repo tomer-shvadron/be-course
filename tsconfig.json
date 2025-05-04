@@ -1,0 +1,22 @@
+{
+  "extends": ["@tsconfig/strictest/tsconfig.json", "@tsconfig/node20/tsconfig.json"],
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "nodenext",
+    "target": "ES2024",
+    "sourceMap": true,
+    "removeComments": true,
+    "verbatimModuleSyntax": false,
+    "moduleResolution": "node",
+
+    // Reduce strictness
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "jsx": "react-jsx",
+
+    "types": ["node", "vitest/globals"],
+
+    "resolveJsonModule": true
+  },
+  "include": ["./src"]
+}
