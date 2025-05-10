@@ -1,17 +1,33 @@
 import { createHash } from 'crypto';
 
 export class HashMap {
-  private map: Array<{ key: string; value: string }[]> = [];
   private size: number = 0;
+  private buckets: number = 8;
   private readonly MAX_SIZE = 100_000;
+  private readonly MAX_ITEMS_IN_BUCKET = 100;
+  private map: Array<{ key: string; value: string }[]> = [];
 
   constructor(private hashFunction?: (key: string) => number) {
     this.hashFunction =
       hashFunction ??
       ((key: string) => {
         const hash = createHash('sha256').update(key).digest('hex');
-        return parseInt(hash.substring(0, 8), 16) % this.MAX_SIZE;
+        return parseInt(hash.substring(0, 8), 16) % this.buckets;
       });
+  }
+
+  private resize(): void {
+    const oldMap = this.map;
+
+    this.size = 0;
+    this.buckets *= 2;
+    this.map = new Array(this.buckets);
+
+    oldMap.forEach((bucket) => {
+      bucket.forEach(({ key, value }) => {
+        this.put(key, value);
+      });
+    });
   }
 
   put(key: string, value: string): void {
@@ -19,7 +35,7 @@ export class HashMap {
       throw new Error('Map is full');
     }
 
-    const index = this.hashFunction(key) % this.MAX_SIZE;
+    const index = this.hashFunction(key) % this.buckets;
 
     if (!this.map[index]) {
       this.map[index] = [];
@@ -32,11 +48,15 @@ export class HashMap {
     } else {
       this.map[index].push({ key, value });
       this.size++;
+
+      if (this.map[index].length > this.MAX_ITEMS_IN_BUCKET) {
+        this.resize();
+      }
     }
   }
 
   get(key: string): string {
-    const index = this.hashFunction(key) % this.MAX_SIZE;
+    const index = this.hashFunction(key) % this.buckets;
 
     if (!this.map[index]) {
       throw new Error('Key not found');
@@ -52,7 +72,7 @@ export class HashMap {
   }
 
   remove(key: string): void {
-    const index = this.hashFunction(key) % this.MAX_SIZE;
+    const index = this.hashFunction(key) % this.buckets;
 
     if (!this.map[index]) {
       return;
