@@ -1,18 +1,24 @@
 import { createHash } from 'crypto';
+import { LinkedList } from './linked-list';
+
+interface Entry {
+  key: string;
+  value: string;
+}
 
 export class HashMap {
   private size: number = 0;
-  private buckets: number = 8;
   private readonly MAX_SIZE = 100_000;
   private readonly MAX_ITEMS_IN_BUCKET = 100;
-  private map: Array<{ key: string; value: string }[]> = []; // Ron: this is a "lazy" approach. in general, an eager approach is easier to understand and maintain.
+
+  private map: Array<LinkedList<Entry>> = new Array(8);
 
   constructor(private hashFunction?: (key: string) => number) {
     this.hashFunction =
       hashFunction ??
       ((key: string) => {
         const hash = createHash('sha256').update(key).digest('hex');
-        return parseInt(hash.substring(0, 8), 16) % this.buckets; // Ron: seems that `% this.buckets` is redundant.
+        return parseInt(hash.substring(0, 8), 16) % this.map.length;
       });
   }
 
@@ -20,13 +26,15 @@ export class HashMap {
     const oldMap = this.map;
 
     this.size = 0;
-    this.buckets *= 2;
-    this.map = new Array(this.buckets);
+    this.map.length *= 2;
+    this.map = new Array(this.map.length);
 
     oldMap.forEach((bucket) => {
-      bucket.forEach(({ key, value }) => {
-        this.put(key, value);
-      });
+      if (bucket) {
+        bucket.toArray().forEach(({ key, value }: Entry) => {
+          this.put(key, value);
+        });
+      }
     });
   }
 
@@ -35,12 +43,10 @@ export class HashMap {
       throw new Error('Map is full');
     }
 
-    const index = this.hashFunction(key) % this.buckets;
+    const index = this.hashFunction!(key) % this.map.length;
 
-    // Ron: implementing the bucket as an array is ok for educational purposes.
-    // in production grade, a linked list would be more efficient, especially for removing
     if (!this.map[index]) {
-      this.map[index] = [];
+      this.map[index] = new LinkedList<Entry>();
     }
 
     const existingEntry = this.findEntry(index, key);
@@ -48,17 +54,20 @@ export class HashMap {
     if (existingEntry) {
       existingEntry.value = value;
     } else {
-      this.map[index].push({ key, value });
-      this.size++;
+      const bucket = this.map[index];
+      if (bucket) {
+        bucket.append({ key, value });
+        this.size++;
 
-      if (this.map[index].length > this.MAX_ITEMS_IN_BUCKET) {
-        this.resize(); // Ron: nice work! while you're at it, consider also reducing when needed :)
+        if (bucket.getSize() > this.MAX_ITEMS_IN_BUCKET) {
+          this.resize();
+        }
       }
     }
   }
 
   get(key: string): string {
-    const index = this.hashFunction(key) % this.buckets;
+    const index = this.hashFunction!(key) % this.map.length;
 
     if (!this.map[index]) {
       throw new Error('Key not found');
@@ -74,23 +83,42 @@ export class HashMap {
   }
 
   remove(key: string): void {
-    const index = this.hashFunction(key) % this.buckets;
+    const index = this.hashFunction!(key) % this.map.length;
+    const bucket = this.map[index];
 
-    if (!this.map[index]) {
+    if (!bucket) {
       return;
     }
 
-    const entryIndex = this.map[index].findIndex((entry) => entry.key === key);
+    const entry = this.findEntry(index, key);
 
-    if (entryIndex === -1) {
-      throw new Error('Key not found'); // Ron: incorrect implementation
+    if (!entry) {
+      return;
     }
 
-    this.map[index].splice(entryIndex, 1); // Ron: this is the performance issue: O(n) in time.
+    bucket.remove(entry);
     this.size--;
   }
 
-  private findEntry(index: number, key: string) {
-    return this.map[index].find((entry) => entry.key === key);
+  private findEntry(index: number, key: string): Entry | null {
+    const bucket = this.map[index];
+
+    if (!bucket) {
+      return null;
+    }
+
+    return bucket.find((entry: Entry) => entry.key === key);
+  }
+
+  values(): string[] {
+    const result: string[] = [];
+
+    this.map.forEach((bucket) => {
+      if (bucket) {
+        bucket.toArray().forEach((entry: Entry) => result.push(entry.value));
+      }
+    });
+
+    return result;
   }
 }

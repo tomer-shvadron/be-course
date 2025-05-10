@@ -19,6 +19,12 @@ dependencies:
     version: 5.8.3
 
 devDependencies:
+  '@tsconfig/node20':
+    specifier: ^20.1.5
+    version: 20.1.5
+  '@tsconfig/strictest':
+    specifier: ^2.0.5
+    version: 2.0.5
   '@types/node':
     specifier: ^22.15.3
     version: 22.15.3
@@ -411,6 +417,14 @@ packages:
   /@pkgr/core@0.2.4:
     resolution: {integrity: sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+    dev: true
+
+  /@tsconfig/node20@20.1.5:
+    resolution: {integrity: sha512-Vm8e3WxDTqMGPU4GATF9keQAIy1Drd7bPwlgzKJnZtoOsTm1tduUTbDjg0W5qERvGuxPI2h9RbMufH0YdfBylA==}
+    dev: true
+
+  /@tsconfig/strictest@2.0.5:
+    resolution: {integrity: sha512-ec4tjL2Rr0pkZ5hww65c+EEPYwxOi4Ryv+0MtjeaSQRJyq322Q27eOQiFbuNgw2hpL4hB1/W/HBGk3VKS43osg==}
     dev: true
 
   /@types/estree@1.0.7:

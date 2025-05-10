@@ -146,3 +146,6 @@ dist
 # === OS-specific (recommended for all repos) ===
 .DS_Store        # macOS
 Thumbs.db        # Windows
+
+**/input.txt
+**/output.txt

@@ -1,5 +1,8 @@
 {
-  "extends": ["@tsconfig/strictest/tsconfig.json", "@tsconfig/node20/tsconfig.json"],
+  "extends": [
+    "@tsconfig/strictest/tsconfig.json",
+    "@tsconfig/node20/tsconfig.json"
+  ],
   "compilerOptions": {
     "outDir": "./dist",
     "module": "nodenext",
@@ -7,7 +10,7 @@
     "sourceMap": true,
     "removeComments": true,
     "verbatimModuleSyntax": false,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
 
     // Reduce strictness
     "noUnusedLocals": false,
@@ -16,7 +19,9 @@
 
     "types": ["node", "vitest/globals"],
 
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+
+    "lib": ["es2024", "dom"]
   },
   "include": ["./src"]
 }
