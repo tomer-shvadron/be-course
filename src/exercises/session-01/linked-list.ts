@@ -80,12 +80,12 @@ export class LinkedList<T> {
     return value;
   }
 
-  remove(value: T): boolean {
-    if (!this.head) {
+  private removeNode(node: Node<T>): boolean {
+    if (!node) {
       return false;
     }
 
-    if (this.head.value === value) {
+    if (node === this.head) {
       this.head = this.head.next;
 
       if (!this.head) {
@@ -93,23 +93,35 @@ export class LinkedList<T> {
       }
 
       this.size--;
-
       return true;
     }
 
     let current = this.head;
 
-    while (current.next) {
-      if (current.next.value === value) {
-        current.next = current.next.next;
+    while (current && current.next !== node) {
+      current = current.next;
+    }
 
-        if (!current.next) {
-          this.tail = current;
-        }
+    if (!current) {
+      return false;
+    }
 
-        this.size--;
+    current.next = node.next;
 
-        return true;
+    if (node === this.tail) {
+      this.tail = current;
+    }
+
+    this.size--;
+    return true;
+  }
+
+  remove(value: T): boolean {
+    let current = this.head;
+
+    while (current) {
+      if (current.value === value) {
+        return this.removeNode(current);
       }
 
       current = current.next;
@@ -139,6 +151,7 @@ export class LinkedList<T> {
       if (current.value === value) {
         return true;
       }
+
       current = current.next;
     }
 
