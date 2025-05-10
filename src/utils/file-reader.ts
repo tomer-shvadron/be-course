@@ -22,4 +22,4 @@ export const readFile = async (relativePath: string): Promise<string[]> => {
   }
 
   return lines;
-}
+};
