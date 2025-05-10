@@ -5,14 +5,14 @@ export class HashMap {
   private buckets: number = 8;
   private readonly MAX_SIZE = 100_000;
   private readonly MAX_ITEMS_IN_BUCKET = 100;
-  private map: Array<{ key: string; value: string }[]> = [];
+  private map: Array<{ key: string; value: string }[]> = []; // Ron: this is a "lazy" approach. in general, an eager approach is easier to understand and maintain.
 
   constructor(private hashFunction?: (key: string) => number) {
     this.hashFunction =
       hashFunction ??
       ((key: string) => {
         const hash = createHash('sha256').update(key).digest('hex');
-        return parseInt(hash.substring(0, 8), 16) % this.buckets;
+        return parseInt(hash.substring(0, 8), 16) % this.buckets; // Ron: seems that `% this.buckets` is redundant.
       });
   }
 
@@ -37,6 +37,8 @@ export class HashMap {
 
     const index = this.hashFunction(key) % this.buckets;
 
+    // Ron: implementing the bucket as an array is ok for educational purposes.
+    // in production grade, a linked list would be more efficient, especially for removing
     if (!this.map[index]) {
       this.map[index] = [];
     }
@@ -50,7 +52,7 @@ export class HashMap {
       this.size++;
 
       if (this.map[index].length > this.MAX_ITEMS_IN_BUCKET) {
-        this.resize();
+        this.resize(); // Ron: nice work! while you're at it, consider also reducing when needed :)
       }
     }
   }
@@ -81,10 +83,10 @@ export class HashMap {
     const entryIndex = this.map[index].findIndex((entry) => entry.key === key);
 
     if (entryIndex === -1) {
-      throw new Error('Key not found');
+      throw new Error('Key not found'); // Ron: incorrect implementation
     }
 
-    this.map[index].splice(entryIndex, 1);
+    this.map[index].splice(entryIndex, 1); // Ron: this is the performance issue: O(n) in time.
     this.size--;
   }
 
