@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { LinkedList } from './linked-list';
+import { LinkedList } from './linked-list.js';
 
 interface Entry {
   key: string;

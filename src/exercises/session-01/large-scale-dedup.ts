@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { HashMap } from './hash-map';
+import { HashMap } from './hash-map.js';
 
 export class LargeScaleDedup {
   private readonly NUM_FILES = 20;
