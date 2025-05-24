@@ -1,6 +1,9 @@
 import { join } from 'path';
-import { Buffer } from 'buffer';
-import { writeFile, readFile, rm, mkdir } from 'fs/promises';
+import { pipeline } from 'stream/promises';
+import { createReadStream, createWriteStream } from 'fs';
+import { writeFile, readFile, rm, mkdir, stat } from 'fs/promises';
+import { IncomingMessage } from 'http';
+
 import { directorySharder } from '../routes/blobs/blobs.utils.js';
 
 type NodeError = Error & { code?: string };
@@ -8,22 +11,53 @@ type NodeError = Error & { code?: string };
 export const BlobsRepository = {
   create: async ({
     id,
-    buffer,
+    stream,
     headers,
   }: {
     id: string;
-    buffer: Buffer;
+    stream: IncomingMessage;
     headers: Record<string, string | string[]>;
   }) => {
     const shardDir = directorySharder.getShardDirectory(id);
     const blobDir = join(shardDir, id);
+    const blobPath = join(blobDir, id);
 
     await mkdir(blobDir, { recursive: true });
 
-    await writeFile(join(blobDir, id), buffer);
-    await writeFile(join(blobDir, 'headers.json'), JSON.stringify(headers), {
-      encoding: 'ascii',
+    const writeStream = createWriteStream(blobPath);
+
+    stream.on('error', (error) => {
+      console.error('Error reading from request stream:', error);
+      writeStream.destroy(error);
     });
+
+    writeStream.on('error', (error) => {
+      console.error('Error writing to file stream:', error);
+      stream.destroy(error);
+    });
+
+    try {
+      await Promise.all([
+        pipeline(stream, writeStream),
+        writeFile(join(blobDir, 'headers.json'), JSON.stringify(headers), {
+          encoding: 'ascii',
+        }),
+      ]);
+
+      const stats = await stat(blobPath);
+
+      if (stats.size === 0) {
+        throw new Error('File was written but is empty');
+      }
+    } catch (error) {
+      try {
+        await rm(blobPath, { force: true });
+      } catch (cleanupError) {
+        console.error('Error cleaning up failed blob:', cleanupError);
+      }
+
+      throw error;
+    }
   },
 
   findById: async (id: string) => {
@@ -33,16 +67,15 @@ export const BlobsRepository = {
     const headersPath = join(blobDir, 'headers.json');
 
     try {
-      const [buffer, headersJson] = await Promise.all([
-        readFile(blobPath),
-        readFile(headersPath, { encoding: 'ascii' }),
-      ]);
-
+      const headersJson = await readFile(headersPath, { encoding: 'ascii' });
       const headers = JSON.parse(headersJson) as Record<
         string,
         string | string[]
       >;
-      return { buffer, headers };
+
+      const stream = createReadStream(blobPath);
+
+      return { stream, headers };
     } catch (error) {
       if (error instanceof Error && (error as NodeError).code === 'ENOENT') {
         return null;

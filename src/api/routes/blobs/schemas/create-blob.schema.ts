@@ -19,4 +19,5 @@ export const CreateBlobSchema = {
   response: {
     200: CreateBlobSuccessResponseSchema,
   },
+  rawBody: true,
 };

@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import {
   FastifyPluginAsyncTypebox,
   TypeBoxTypeProvider,
@@ -14,7 +13,7 @@ import { getRelevantHeaders, validateBlobRequest } from './blobs.utils.js';
 type CreateBlobRequest = FastifyRequest<
   {
     Params: typeof CreateBlobSchema.params;
-    Body: typeof CreateBlobSchema.body;
+    Body: undefined;
   } & TypeBoxTypeProvider
 >;
 
@@ -22,18 +21,24 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
   app.route({
     method: 'POST',
     url: '/blobs/:id',
-    schema: CreateBlobSchema,
+    schema: {
+      ...CreateBlobSchema,
+      body: undefined,
+    },
     handler: async (request: CreateBlobRequest) => {
       try {
         await validateBlobRequest(request);
 
         const headers = getRelevantHeaders(request.headers);
+        const stream = request.raw;
 
-        const buffer = request.body as unknown as Buffer;
+        if (!stream) {
+          throw new Error('Request stream is not available');
+        }
 
         await BlobsRepository.create({
           id: request.params.id,
-          buffer,
+          stream,
           headers,
         });
 
@@ -42,7 +47,8 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
           timestamp: new Date().toISOString(),
         };
       } catch (error) {
-        console.error(error);
+        console.error('Error in blob upload:', error);
+
         throw error;
       }
     },
@@ -64,7 +70,7 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
         });
       }
 
-      const { buffer, headers } = result;
+      const { stream, headers } = result;
 
       for (const [key, value] of Object.entries(headers)) {
         reply.header(key, value);
@@ -74,9 +80,7 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
         reply.header('content-type', 'application/octet-stream');
       }
 
-      reply.send(buffer);
-
-      return reply;
+      return reply.send(stream);
     },
   });
 

@@ -1,5 +1,8 @@
 import Fastify from 'fastify';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
+import { IncomingMessage } from 'http';
+import { Buffer } from 'buffer';
+import { FastifyRequest } from 'fastify';
 
 import { BlobsRoutes } from './routes/blobs/blobs.route.js';
 import { ApiConfig } from './api.config.js';
@@ -11,13 +14,45 @@ const api = Fastify({
   bodyLimit: ApiConfig.MAX_LENGTH,
 }).withTypeProvider<TypeBoxTypeProvider>();
 
+api.removeAllContentTypeParsers();
+
 api.addContentTypeParser(
-  ['image/jpeg', 'image/png', 'text/plain'],
-  { parseAs: 'buffer' },
-  (_, body, done) => {
-    done(null, body);
+  '*',
+  async function (request: FastifyRequest, payload: IncomingMessage) {
+    if (request.url.startsWith('/blobs/') && request.method === 'POST') {
+      return undefined;
+    }
+
+    return new Promise((resolve, reject) => {
+      const chunks: Buffer[] = [];
+
+      payload.on('data', (chunk) => chunks.push(chunk));
+
+      payload.on('end', () => {
+        const body = Buffer.concat(chunks);
+        resolve(body);
+      });
+
+      payload.on('error', (err) => reject(err));
+    });
   }
 );
+
+api.addHook('preHandler', (request, reply, done) => {
+  if (request.url.startsWith('/blobs/') && request.method === 'POST') {
+    if (!request.raw) {
+      done(new Error('Raw request not available'));
+      return;
+    }
+
+    if (request.raw.readableEnded) {
+      done(new Error('Request body has already been consumed'));
+      return;
+    }
+  }
+
+  done();
+});
 
 api.register(BlobsRoutes);
 

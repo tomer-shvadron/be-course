@@ -149,3 +149,4 @@ Thumbs.db        # Windows
 
 **/*.txt
 **/.DS_Store
+**/saved-blobs/*
