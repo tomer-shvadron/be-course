@@ -7,13 +7,57 @@ import { stat } from 'fs/promises';
 import { ApiConfig } from '../../api.config.js';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { CreateBlobSchema } from './schemas/create-blob.schema.js';
+import { createHash } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export const BLOBS_DIR = join(__dirname, 'saved-blobs');
 
-export const ensureBlobsDirectory = async (): Promise<void> => {
+class DirectorySharder {
+  private readonly shardMap: Map<string, number> = new Map();
+  private readonly shardCount: number;
+
+  constructor(private readonly maxBlobsPerShard: number) {
+    this.shardCount = Math.ceil(
+      ApiConfig.MAX_DISK_QUOTA / (maxBlobsPerShard * ApiConfig.MAX_LENGTH)
+    );
+  }
+
+  private getShardKey(id: string): string {
+    return createHash('sha256').update(id).digest('hex');
+  }
+
+  private getShardNumber(hash: string): number {
+    // Use first 8 characters of hash to get a number between 0 and shardCount-1
+    return parseInt(hash.substring(0, 8), 16) % this.shardCount;
+  }
+
+  getShardDirectory(id: string): string {
+    const hash = this.getShardKey(id);
+    const shardNumber = this.getShardNumber(hash);
+
+    const currentCount = this.shardMap.get(hash) || 0;
+    this.shardMap.set(hash, currentCount + 1);
+
+    return join(BLOBS_DIR, `shard-${shardNumber}`);
+  }
+
+  removeFromShard(id: string): void {
+    const hash = this.getShardKey(id);
+    const currentCount = this.shardMap.get(hash) || 0;
+
+    if (currentCount > 0) {
+      this.shardMap.set(hash, currentCount - 1);
+    }
+  }
+}
+
+export const directorySharder = new DirectorySharder(
+  ApiConfig.MAX_BLOBS_IN_FOLDER
+);
+
+export const ensureBlobsDirectory = async () => {
   try {
     await mkdir(BLOBS_DIR, { recursive: true });
   } catch (error) {
@@ -23,7 +67,7 @@ export const ensureBlobsDirectory = async (): Promise<void> => {
   }
 };
 
-export const createBlobDirectory = async (id: string): Promise<string> => {
+export const createBlobDirectory = async (id: string) => {
   const blobDir = join(BLOBS_DIR, id);
 
   await mkdir(blobDir, { recursive: true });
@@ -31,7 +75,7 @@ export const createBlobDirectory = async (id: string): Promise<string> => {
   return blobDir;
 };
 
-export const getBlobDirectory = (id: string): string => join(BLOBS_DIR, id);
+export const getBlobDirectory = (id: string) => join(BLOBS_DIR, id);
 
 export const getRelevantHeaders = (
   headers: Record<string, string | string[]>
@@ -56,7 +100,7 @@ export const validateBlobRequest = async (
       Body: typeof CreateBlobSchema.body;
     } & TypeBoxTypeProvider
   >
-): Promise<void> => {
+) => {
   const { id } = request.params;
   const contentLength = request.headers['content-length'];
   const headers = getRelevantHeaders(request.headers);
