@@ -147,6 +147,9 @@ dist
 .DS_Store        # macOS
 Thumbs.db        # Windows
 
+**/input.txt
+**/output.txt
+
 **/*.txt
 **/.DS_Store
 **/saved-blobs/*
