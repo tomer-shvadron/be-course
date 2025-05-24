@@ -148,3 +148,4 @@ dist
 Thumbs.db        # Windows
 
 **/*.txt
+**/.DS_Store
