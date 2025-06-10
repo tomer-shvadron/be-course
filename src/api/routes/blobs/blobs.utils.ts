@@ -4,9 +4,9 @@ import { fileURLToPath } from 'url';
 import { FastifyRequest } from 'fastify';
 import { Buffer } from 'buffer';
 import { stat } from 'fs/promises';
-import { ApiConfig } from '../../api.config.js';
+import { config } from '../../../common/config.js';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { CreateBlobSchema } from './schemas/create-blob.schema.js';
+import { CreateBlobSchema } from '../../../common/schemas/create-blob.schema.js';
 import { createHash } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,7 +20,7 @@ class DirectorySharder {
 
   constructor(private readonly maxBlobsPerShard: number) {
     this.shardCount = Math.ceil(
-      ApiConfig.MAX_DISK_QUOTA / (maxBlobsPerShard * ApiConfig.MAX_LENGTH)
+      config.API.MAX_DISK_QUOTA / (maxBlobsPerShard * config.API.MAX_LENGTH)
     );
   }
 
@@ -54,7 +54,7 @@ class DirectorySharder {
 }
 
 export const directorySharder = new DirectorySharder(
-  ApiConfig.MAX_BLOBS_IN_FOLDER
+  config.API.MAX_BLOBS_IN_FOLDER
 );
 
 export const ensureBlobsDirectory = async () => {
@@ -85,7 +85,7 @@ export const getRelevantHeaders = (
   } as Record<string, string | string[]>;
 
   for (const key in headers) {
-    if (key.startsWith('x-rebase-')) {
+    if (key.toLowerCase().startsWith('x-rebase-')) {
       relevantHeaders[key] = headers[key];
     }
   }
@@ -109,9 +109,9 @@ export const validateBlobRequest = async (
     throw new Error('Content-Length header is required');
   }
 
-  if (id.length > ApiConfig.MAX_ID_LENGTH) {
+  if (id.length > config.API.MAX_ID_LENGTH) {
     throw new Error(
-      `ID length exceeds maximum allowed length of ${ApiConfig.MAX_ID_LENGTH} characters`
+      `ID length exceeds maximum allowed length of ${config.API.MAX_ID_LENGTH} characters`
     );
   }
 
@@ -125,24 +125,24 @@ export const validateBlobRequest = async (
 
   const headerEntries = Object.entries(headers);
 
-  if (headerEntries.length > ApiConfig.MAX_HEADER_COUNT) {
+  if (headerEntries.length > config.API.MAX_HEADER_COUNT) {
     throw new Error(
-      `Number of headers exceeds maximum allowed count of ${ApiConfig.MAX_HEADER_COUNT}`
+      `Number of headers exceeds maximum allowed count of ${config.API.MAX_HEADER_COUNT}`
     );
   }
 
   for (const [key, value] of headerEntries) {
-    if (key.length > ApiConfig.MAX_HEADER_LENGTH) {
+    if (key.length > config.API.MAX_HEADER_LENGTH) {
       throw new Error(
-        `Header key length exceeds maximum allowed length of ${ApiConfig.MAX_HEADER_LENGTH} characters`
+        `Header key length exceeds maximum allowed length of ${config.API.MAX_HEADER_LENGTH} characters`
       );
     }
 
     const valueStr = Array.isArray(value) ? value.join(',') : value;
 
-    if (valueStr.length > ApiConfig.MAX_HEADER_LENGTH) {
+    if (valueStr.length > config.API.MAX_HEADER_LENGTH) {
       throw new Error(
-        `Header value length exceeds maximum allowed length of ${ApiConfig.MAX_HEADER_LENGTH} characters`
+        `Header value length exceeds maximum allowed length of ${config.API.MAX_HEADER_LENGTH} characters`
       );
     }
   }
@@ -151,9 +151,9 @@ export const validateBlobRequest = async (
   const contentLengthNum = parseInt(contentLength, 10);
   const totalSize = contentLengthNum + headersSize;
 
-  if (totalSize > ApiConfig.MAX_LENGTH) {
+  if (totalSize > config.API.MAX_LENGTH) {
     throw new Error(
-      `Total size (${totalSize} bytes) exceeds maximum allowed size of ${ApiConfig.MAX_LENGTH} bytes`
+      `Total size (${totalSize} bytes) exceeds maximum allowed size of ${config.API.MAX_LENGTH} bytes`
     );
   }
 
@@ -162,9 +162,9 @@ export const validateBlobRequest = async (
     const currentDiskUsage = stats.size;
     const potentialNewUsage = currentDiskUsage + totalSize;
 
-    if (potentialNewUsage > ApiConfig.MAX_DISK_QUOTA) {
+    if (potentialNewUsage > config.API.MAX_DISK_QUOTA) {
       throw new Error(
-        `Storing this blob would exceed maximum disk quota of ${ApiConfig.MAX_DISK_QUOTA} bytes`
+        `Storing this blob would exceed maximum disk quota of ${config.API.MAX_DISK_QUOTA} bytes`
       );
     }
   } catch (error) {

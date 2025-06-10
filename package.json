@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "description": "BE Course Repository",
   "scripts": {
-    "dev": "tsx watch src/api/api.ts",
-    "start": "tsx src/api/api.ts",
+    "dev:api": "tsx watch src/api/api.ts",
+    "dev:lb": "tsx watch src/load-balancer/index.ts",
+    "start:api": "tsx src/api/api.ts",
+    "start:lb": "tsx src/load-balancer/index.ts",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -18,12 +20,16 @@
   "dependencies": {
     "@fastify/type-provider-typebox": "^5.1.0",
     "@sinclair/typebox": "^0.34.33",
+    "axios": "^1.9.0",
     "fastify": "^5.3.3",
+    "getmac": "^6.6.0",
+    "logzio-nodejs": "^2.5.0",
     "path": "^0.12.7",
     "piscina": "^5.0.0",
     "readline": "^1.3.0",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

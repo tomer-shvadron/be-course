@@ -1,5 +1,7 @@
 import { Type } from '@sinclair/typebox';
 
+import { HTTP_CODES } from '../http-codes.js';
+
 export const DeleteBlobParamsSchema = Type.Object({
   id: Type.String(),
 });
@@ -12,6 +14,6 @@ export const DeleteBlobSuccessResponseSchema = Type.Object({
 export const DeleteBlobSchema = {
   params: DeleteBlobParamsSchema,
   response: {
-    200: DeleteBlobSuccessResponseSchema,
+    [HTTP_CODES.OK]: DeleteBlobSuccessResponseSchema,
   },
 };

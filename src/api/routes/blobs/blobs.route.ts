@@ -4,9 +4,9 @@ import {
 } from '@fastify/type-provider-typebox';
 import { FastifyRequest } from 'fastify';
 
-import { CreateBlobSchema } from './schemas/create-blob.schema.js';
-import { GetBlobSchema } from './schemas/get-blob.schema.js';
-import { DeleteBlobSchema } from './schemas/delete-blob.schema.js';
+import { CreateBlobSchema } from '../../../common/schemas/create-blob.schema.js';
+import { GetBlobSchema } from '../../../common/schemas/get-blob.schema.js';
+import { DeleteBlobSchema } from '../../../common/schemas/delete-blob.schema.js';
 import { BlobsRepository } from '../../repositories/blobs.repository.js';
 import { getRelevantHeaders, validateBlobRequest } from './blobs.utils.js';
 
@@ -65,7 +65,6 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
 
       if (!result) {
         return reply.status(404).send({
-          error: 'Blob not found',
           message: `Blob with id ${id} was not found`,
         });
       }

@@ -2,9 +2,10 @@ import Fastify from 'fastify';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 
 import { config } from '../common/config.js';
+import { logger } from '../common/logger.js';
 import { initServer } from '../common/init-server.js';
-import { BlobsRoutes } from './routes/blobs/blobs.route.js';
-import { ensureBlobsDirectory } from './routes/blobs/blobs.utils.js';
+import { MainRoute } from './routes/main/main.route.js';
+import { NodesInternalRoute } from './routes/nodes/nodes.internal.js';
 
 const api = Fastify({
   logger: true,
@@ -14,23 +15,21 @@ const api = Fastify({
 
 initServer(api);
 
-api.register(BlobsRoutes);
+api.register(MainRoute);
+api.register(NodesInternalRoute);
 
 const listen = async () => {
   try {
-    await ensureBlobsDirectory();
-
-    const { PORT, HOST } = config.API;
+    const { PORT, HOST } = config.LOAD_BALANCER;
 
     await api.listen({
       port: PORT,
       host: HOST,
     });
 
-    console.log(`Server is running on http://${HOST}:${PORT}`);
+    logger.info(`Load Balancer is running on http://${HOST}:${PORT}`);
   } catch (err) {
-    api.log.error(err);
-
+    console.error(err);
     process.exit(1);
   }
 };
