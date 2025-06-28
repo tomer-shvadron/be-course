@@ -50,7 +50,8 @@ export const UsersRepository = {
             (SELECT (xmax != 0 AND previous_deleted_since IS NOT NULL) FROM existing_user) as was_reactivated
     `;
 
-    const result = await db.query(query, [uuidv7(), email, fullName]);
+    const uuid = uuidv7();
+    const result = await db.query(query, [uuid, email, fullName]);
 
     if (result.rows.length === 0) {
       logger.error('Failed to create user');
@@ -74,11 +75,11 @@ export const UsersRepository = {
     const { id, is_inserted, is_updated, was_reactivated } = commandResult.data;
 
     if (was_reactivated) {
-      logger.info('User was reactivated', { email, id });
+      logger.info('User was reactivated', { id });
     } else if (is_inserted) {
-      logger.info('User was created', { email, id });
+      logger.info('User was created', { id });
     } else if (is_updated) {
-      logger.info('User was updated', { email, id });
+      logger.info('User was updated', { id });
     }
   },
 
