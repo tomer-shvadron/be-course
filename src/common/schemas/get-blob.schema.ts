@@ -1,6 +1,7 @@
 import { Type } from '@sinclair/typebox';
 
 import { ErrorSchema } from './error.schema.js';
+import { HTTP_CODES } from '../http-codes.js';
 
 export const GetBlobParamsSchema = Type.Object({
   id: Type.String(),
@@ -9,7 +10,7 @@ export const GetBlobParamsSchema = Type.Object({
 export const GetBlobSchema = {
   params: GetBlobParamsSchema,
   response: {
-    200: Type.Any(),
-    404: ErrorSchema,
+    [HTTP_CODES.OK]: Type.Any(),
+    [HTTP_CODES.NOT_FOUND]: ErrorSchema,
   },
 };

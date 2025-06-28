@@ -22,8 +22,8 @@ export const BlobsRoutes: FastifyPluginAsyncTypebox = async (app) => {
     method: 'POST',
     url: '/blobs/:id',
     schema: {
-      ...CreateBlobSchema,
-      body: undefined,
+      params: CreateBlobSchema.params,
+      response: CreateBlobSchema.response,
     },
     handler: async (request: CreateBlobRequest) => {
       try {

@@ -21,7 +21,7 @@ const logzio = createLogger({
   host: 'listener-eu.logz.io',
   port: '8071',
   type: 'tomer-shvadron-logs',
-  debug: !weAreInProduction,
+  debug: false,
 });
 
 logzio.extraFields = {
