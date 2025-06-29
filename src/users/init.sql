@@ -9,9 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
     deleted_since TIMESTAMP DEFAULT NULL
 );
 
--- Create index on email for faster lookups
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-
 -- Insert some sample data
 INSERT INTO users (id, email, full_name) VALUES
     ('018f1234-5678-9abc-def0-123456789abc', 'john.doe@example.com', 'John Doe'),
